@@ -4,6 +4,7 @@ import App from './App.tsx';
 import { FitnessProvider } from './context/FitnessContext';
 import './index.css';
 import './styles/animations.css';
+import './styles/responsive.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

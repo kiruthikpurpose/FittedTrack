@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Post from '../components/social/Post';
 import Leaderboard from '../components/social/Leaderboard';
+import { useFitness } from '../context/FitnessContext';
 import type { SocialPost, LeaderboardEntry } from '../types/fitness';
 
 // Mock data - replace with real data later
@@ -10,7 +11,7 @@ const mockPosts: SocialPost[] = [
     userId: '1',
     username: 'Sarah_Fitness',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330',
-    content: 'Crushed my workout today! 💪 Hit all my targets and feeling great!',
+    content: 'Crushed my workout today! 💪 Hit all my targets and feeling great! Check out my stats below.',
     metrics: {
       waterIntake: 2.5,
       steps: 12000,
@@ -32,13 +33,34 @@ const mockPosts: SocialPost[] = [
     userId: '2',
     username: 'Mike_Runner',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d',
-    content: 'New personal best on my morning run! 🏃‍♂️',
+    content: 'New personal best on my morning run! 🏃‍♂️ The weather was perfect today.',
     metrics: {
       steps: 15000,
     },
     likes: 18,
     comments: [],
     createdAt: '2024-02-20T08:15:00Z',
+  },
+  {
+    id: '3',
+    userId: '3',
+    username: 'Emma_Wellness',
+    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80',
+    content: 'Starting my day with a refreshing yoga session and staying hydrated! 🧘‍♀️💧',
+    metrics: {
+      waterIntake: 1.5,
+    },
+    likes: 31,
+    comments: [
+      {
+        id: '2',
+        userId: '4',
+        username: 'Yoga_Master',
+        content: 'Great way to start the day! Which poses did you focus on?',
+        createdAt: '2024-02-20T11:45:00Z',
+      },
+    ],
+    createdAt: '2024-02-20T07:30:00Z',
   },
 ];
 
@@ -68,13 +90,17 @@ const mockLeaderboard: LeaderboardEntry[] = [
 
 export default function Community() {
   const [posts, setPosts] = useState(mockPosts);
+  const { togglePostLike, likedPosts } = useFitness();
 
   const handleLike = (postId: string) => {
-    setPosts(posts.map(post =>
-      post.id === postId
-        ? { ...post, likes: post.likes + 1 }
-        : post
-    ));
+    if (!likedPosts.has(postId)) {
+      setPosts(posts.map(post =>
+        post.id === postId
+          ? { ...post, likes: post.likes + 1 }
+          : post
+      ));
+      togglePostLike(postId);
+    }
   };
 
   const handleComment = (postId: string, content: string) => {
