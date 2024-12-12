@@ -2,33 +2,28 @@
 
 import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { getStoredData, updateProfile, updateGoals, calculateBMI, exportData } from '@/lib/storage';
+import { getStoredData, updateProfile, updateGoals, exportData, calculateBMI } from '@/lib/storage';
+import { generatePDF } from '@/lib/pdf';
 import { toast } from 'sonner';
 import { UserProfile, Goals } from '@/lib/types';
+import { ProfileForm } from '@/components/settings/ProfileForm';
+import { GoalsForm } from '@/components/settings/GoalsForm';
+import { FileText, Download } from 'lucide-react';
 
 export default function Settings() {
   const [profile, setProfile] = useState<UserProfile>({
     name: '',
-    age: 0,
-    height: 0,
-    weight: 0,
+    age: null,
+    height: null,
+    weight: null,
     gender: 'other',
   });
 
   const [goals, setGoals] = useState<Goals>({
-    waterIntake: 3,
-    steps: 10000,
-    sleepHours: 8,
+    waterIntake: null,
+    steps: null,
+    sleepHours: null,
   });
 
   useEffect(() => {
@@ -37,19 +32,22 @@ export default function Settings() {
     setGoals(data.goals);
   }, []);
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateProfile(profile);
+  const handleProfileSubmit = (updatedProfile: UserProfile) => {
+    updateProfile(updatedProfile);
     toast.success('Profile updated successfully!');
   };
 
-  const handleGoalsSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateGoals(goals);
+  const handleGoalsSubmit = (updatedGoals: Goals) => {
+    const validGoals = {
+      waterIntake: updatedGoals.waterIntake ?? 0,
+      steps: updatedGoals.steps ?? 0,
+      sleepHours: updatedGoals.sleepHours ?? 0,
+    };
+    updateGoals(validGoals);
     toast.success('Goals updated successfully!');
   };
 
-  const handleExport = () => {
+  const handleExportJSON = () => {
     const dataStr = exportData();
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -60,85 +58,35 @@ export default function Settings() {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-    toast.success('Data exported successfully!');
+    toast.success('Data exported as JSON successfully!');
   };
 
-  const bmi = calculateBMI(profile.height, profile.weight);
+  const handleExportPDF = () => {
+    const data = getStoredData();
+    const doc = generatePDF(data);
+    doc.save('fittedtrack-report.pdf');
+    toast.success('Report exported as PDF successfully!');
+  };
+
+  const bmi = profile.height && profile.weight ? calculateBMI(profile.height, profile.weight) : null;
 
   return (
-    <div className="space-y-6">
+    <div className="container mx-auto max-w-6xl px-4 py-6 space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">Manage your profile and goals</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Profile</h2>
-          <form onSubmit={handleProfileSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-              />
-            </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="space-y-6">
+          <ProfileForm
+            profile={profile}
+            onSubmit={handleProfileSubmit}
+            onProfileChange={setProfile}
+          />
 
-            <div className="space-y-2">
-              <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
-                type="number"
-                value={profile.age}
-                onChange={(e) => setProfile({ ...profile, age: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="height">Height (cm)</Label>
-              <Input
-                id="height"
-                type="number"
-                value={profile.height}
-                onChange={(e) => setProfile({ ...profile, height: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="weight">Weight (kg)</Label>
-              <Input
-                id="weight"
-                type="number"
-                value={profile.weight}
-                onChange={(e) => setProfile({ ...profile, weight: parseInt(e.target.value) || 0 })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Gender</Label>
-              <Select
-                value={profile.gender}
-                onValueChange={(value: 'male' | 'female' | 'other') =>
-                  setProfile({ ...profile, gender: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Button type="submit" className="w-full">Save Profile</Button>
-          </form>
-
-          {profile.height > 0 && profile.weight > 0 && (
-            <div className="mt-4 p-4 bg-muted rounded-lg">
+          {bmi !== null && (
+            <Card className="p-4 bg-muted">
               <p className="font-semibold">BMI: {bmi.toFixed(1)}</p>
               <p className="text-sm text-muted-foreground">
                 {bmi < 18.5
@@ -149,60 +97,29 @@ export default function Settings() {
                   ? 'Overweight'
                   : 'Obese'}
               </p>
-            </div>
+            </Card>
           )}
-        </Card>
+        </div>
 
         <div className="space-y-6">
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Daily Goals</h2>
-            <form onSubmit={handleGoalsSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="waterGoal">Water Intake Goal (L)</Label>
-                <Input
-                  id="waterGoal"
-                  type="number"
-                  step="0.1"
-                  value={goals.waterIntake}
-                  onChange={(e) =>
-                    setGoals({ ...goals, waterIntake: parseFloat(e.target.value) || 0 })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="stepsGoal">Steps Goal</Label>
-                <Input
-                  id="stepsGoal"
-                  type="number"
-                  value={goals.steps}
-                  onChange={(e) =>
-                    setGoals({ ...goals, steps: parseInt(e.target.value) || 0 })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="sleepGoal">Sleep Goal (hours)</Label>
-                <Input
-                  id="sleepGoal"
-                  type="number"
-                  value={goals.sleepHours}
-                  onChange={(e) =>
-                    setGoals({ ...goals, sleepHours: parseInt(e.target.value) || 0 })
-                  }
-                />
-              </div>
-
-              <Button type="submit" className="w-full">Save Goals</Button>
-            </form>
-          </Card>
+          <GoalsForm
+            goals={goals}
+            onSubmit={handleGoalsSubmit}
+            onGoalsChange={setGoals}
+          />
 
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Data Management</h2>
-            <Button onClick={handleExport} className="w-full">
-              Export Data
-            </Button>
+            <div className="space-y-3">
+              <Button onClick={handleExportPDF} className="w-full flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Export as PDF
+              </Button>
+              <Button onClick={handleExportJSON} variant="outline" className="w-full flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Export as JSON
+              </Button>
+            </div>
           </Card>
         </div>
       </div>

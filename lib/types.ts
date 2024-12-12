@@ -1,23 +1,24 @@
 export interface UserProfile {
   name: string;
-  age: number;
-  height: number;
-  weight: number;
+  age: number | null;
+  height: number | null;
+  weight: number | null;
   gender: 'male' | 'female' | 'other';
+  photoUrl?: string;
 }
 
 export interface DailyMetrics {
   date: string;
-  waterIntake: number;
-  steps: number;
-  sleepHours: number;
-  caloriesBurned: number;
+  waterIntake: number | null;
+  steps: number | null;
+  sleepHours: number | null;
+  caloriesBurned: number | null;
 }
 
 export interface Goals {
-  waterIntake: number;
-  steps: number;
-  sleepHours: number;
+  waterIntake: number | null;
+  steps: number | null;
+  sleepHours: number | null;
 }
 
 export interface HealthData {
