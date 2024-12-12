@@ -1,5 +1,4 @@
-'use client';
-
+import React from 'react';
 import { UserProfile } from '@/lib/types';
 import { MetricInput } from '@/components/metrics/MetricInput';
 import { Label } from '@/components/ui/label';
@@ -13,6 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 interface ProfileFormProps {
   profile: UserProfile;
@@ -36,20 +36,15 @@ export function ProfileForm({ profile, onSubmit, onProfileChange }: ProfileFormP
           onPhotoChange={(url) => onProfileChange({ ...profile, photoUrl: url })}
         />
 
-        <MetricInput
-          label="Name"
-          id="name"
-          value={profile.name ? 1 : null}
-          onChange={() => {}}
-          type="text"
-          placeholder="Enter your name"
-        />
-        <input
-          type="text"
-          value={profile.name}
-          onChange={(e) => onProfileChange({ ...profile, name: e.target.value })}
-          className="hidden"
-        />
+        <div className="space-y-2">
+          <Label htmlFor="name">Name</Label>
+          <Input
+            id="name"
+            value={profile.name}
+            onChange={(e) => onProfileChange({ ...profile, name: e.target.value })}
+            placeholder="Enter your name"
+          />
+        </div>
 
         <MetricInput
           label="Age"

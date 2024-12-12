@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Camera } from 'lucide-react';
+import { Camera, Dumbbell } from 'lucide-react';
 
 interface ProfilePhotoProps {
   photoUrl?: string;
@@ -33,8 +33,8 @@ export function ProfilePhoto({ photoUrl, name, onPhotoChange }: ProfilePhotoProp
       <div className="relative">
         <Avatar className="h-24 w-24">
           <AvatarImage src={preview} alt={name} />
-          <AvatarFallback className="text-lg">
-            {name ? name.charAt(0).toUpperCase() : '?'}
+          <AvatarFallback className="bg-primary/10">
+            <Dumbbell className="h-12 w-12 text-primary" />
           </AvatarFallback>
         </Avatar>
         <Button

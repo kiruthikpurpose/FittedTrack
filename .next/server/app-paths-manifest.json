@@ -1,0 +1,6 @@
+{
+  "/page": "app/page.js",
+  "/insights/page": "app/insights/page.js",
+  "/daily-input/page": "app/daily-input/page.js",
+  "/settings/page": "app/settings/page.js"
+}

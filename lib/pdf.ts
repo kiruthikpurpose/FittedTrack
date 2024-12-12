@@ -3,8 +3,9 @@
 import { jsPDF } from 'jspdf';
 import { HealthData } from './types';
 import { format } from 'date-fns';
+import html2canvas from 'html2canvas';
 
-export function generatePDF(data: HealthData) {
+export async function generatePDF(data: HealthData) {
   const doc = new jsPDF();
   
   // Add title and logo
@@ -42,23 +43,21 @@ export function generatePDF(data: HealthData) {
   doc.text(`Steps: ${data.goals.steps?.toLocaleString() || 'Not set'}`, 20, 150);
   doc.text(`Sleep: ${data.goals.sleepHours ? `${data.goals.sleepHours} hours` : 'Not set'}`, 20, 160);
   
-  // Recent Metrics Section
+  // Recent Metrics Section with Graph
   doc.setFontSize(16);
   doc.text('Recent Metrics (Last 7 Days)', 20, 180);
   
-  const recentMetrics = data.dailyMetrics.slice(-7);
-  let y = 190;
-  
-  recentMetrics.forEach((metric) => {
-    doc.setFontSize(12);
-    doc.text(format(new Date(metric.date), 'PPP'), 20, y);
-    y += 7;
-    doc.setFontSize(10);
-    doc.text(`Water: ${metric.waterIntake || 0}L | Steps: ${metric.steps?.toLocaleString() || 0}`, 30, y);
-    y += 7;
-    doc.text(`Sleep: ${metric.sleepHours || 0}h | Calories: ${metric.caloriesBurned?.toLocaleString() || 0}`, 30, y);
-    y += 12;
-  });
+  try {
+    // Capture the chart element
+    const chartElement = document.querySelector('.recharts-wrapper');
+    if (chartElement) {
+      const canvas = await html2canvas(chartElement as HTMLElement);
+      const imgData = canvas.toDataURL('image/png');
+      doc.addImage(imgData, 'PNG', 20, 190, 170, 80);
+    }
+  } catch (error) {
+    console.error('Error capturing chart:', error);
+  }
   
   return doc;
 }
